@@ -1,5 +1,5 @@
 # srt2vtt
-Converts srt to vtt
+Converts srt-subtitles to vtt
 
 ## Features
 * Converts subtitles on the fly
