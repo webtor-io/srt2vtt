@@ -1,7 +1,7 @@
 package astits
 
 import (
-	astibyte "github.com/asticode/go-astitools/byte"
+	"github.com/asticode/go-astikit"
 	"github.com/pkg/errors"
 )
 
@@ -102,7 +102,7 @@ type DSMTrickMode struct {
 }
 
 // parsePESData parses a PES data
-func parsePESData(i *astibyte.Iterator) (d *PESData, err error) {
+func parsePESData(i *astikit.BytesIterator) (d *PESData, err error) {
 	// Create data
 	d = &PESData{}
 
@@ -110,25 +110,19 @@ func parsePESData(i *astibyte.Iterator) (d *PESData, err error) {
 	i.Seek(3)
 
 	// Parse header
-	var dataStart int
-	if d.Header, dataStart, err = parsePESHeader(i); err != nil {
+	var dataStart, dataEnd int
+	if d.Header, dataStart, dataEnd, err = parsePESHeader(i); err != nil {
 		err = errors.Wrap(err, "astits: parsing PES header failed")
 		return
 	}
 
 	// Seek to data
-	if dataStart > 0 {
-		i.Seek(dataStart)
-	}
+	i.Seek(dataStart)
 
-	// Parse data
-	if d.Header != nil && d.Header.PacketLength > 0 {
-		if d.Data, err = i.NextBytes(int(d.Header.PacketLength)); err != nil {
-			err = errors.Wrap(err, "astits: getting next bytes failed")
-			return
-		}
-	} else {
-		d.Data = i.Dump()
+	// Extract data
+	if d.Data, err = i.NextBytes(dataEnd - dataStart); err != nil {
+		err = errors.Wrap(err, "astits: fetching next bytes failed")
+		return
 	}
 	return
 }
@@ -139,7 +133,7 @@ func hasPESOptionalHeader(streamID uint8) bool {
 }
 
 // parsePESData parses a PES header
-func parsePESHeader(i *astibyte.Iterator) (h *PESHeader, dataStart int, err error) {
+func parsePESHeader(i *astikit.BytesIterator) (h *PESHeader, dataStart, dataEnd int, err error) {
 	// Create header
 	h = &PESHeader{}
 
@@ -163,18 +157,27 @@ func parsePESHeader(i *astibyte.Iterator) (h *PESHeader, dataStart int, err erro
 	// Length
 	h.PacketLength = uint16(bs[0])<<8 | uint16(bs[1])
 
+	// Update data end
+	if h.PacketLength > 0 {
+		dataEnd = i.Offset() + int(h.PacketLength)
+	} else {
+		dataEnd = i.Len()
+	}
+
 	// Optional header
 	if hasPESOptionalHeader(h.StreamID) {
 		if h.OptionalHeader, dataStart, err = parsePESOptionalHeader(i); err != nil {
 			err = errors.Wrap(err, "astits: parsing PES optional header failed")
 			return
 		}
+	} else {
+		dataStart = i.Offset()
 	}
 	return
 }
 
 // parsePESOptionalHeader parses a PES optional header
-func parsePESOptionalHeader(i *astibyte.Iterator) (h *PESOptionalHeader, dataStart int, err error) {
+func parsePESOptionalHeader(i *astikit.BytesIterator) (h *PESOptionalHeader, dataStart int, err error) {
 	// Create header
 	h = &PESOptionalHeader{}
 
@@ -387,7 +390,7 @@ func parseDSMTrickMode(i byte) (m *DSMTrickMode) {
 }
 
 // parsePTSOrDTS parses a PTS or a DTS
-func parsePTSOrDTS(i *astibyte.Iterator) (cr *ClockReference, err error) {
+func parsePTSOrDTS(i *astikit.BytesIterator) (cr *ClockReference, err error) {
 	var bs []byte
 	if bs, err = i.NextBytes(5); err != nil {
 		err = errors.Wrap(err, "astits: fetching next bytes failed")
@@ -398,7 +401,7 @@ func parsePTSOrDTS(i *astibyte.Iterator) (cr *ClockReference, err error) {
 }
 
 // parseESCR parses an ESCR
-func parseESCR(i *astibyte.Iterator) (cr *ClockReference, err error) {
+func parseESCR(i *astikit.BytesIterator) (cr *ClockReference, err error) {
 	var bs []byte
 	if bs, err = i.NextBytes(6); err != nil {
 		err = errors.Wrap(err, "astits: fetching next bytes failed")
