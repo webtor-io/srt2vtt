@@ -1,4 +1,4 @@
-FROM golang:latest
+FROM golang:latest as build
 
 # set work dir
 WORKDIR /app
@@ -18,7 +18,7 @@ RUN go build -mod=vendor -ldflags '-w -s' -a -installsuffix cgo -o server
 FROM golang:latest
 
 # copy our static linked library
-COPY --from=0 /app/server .
+COPY --from=build /app/server .
 
 # tell we are exposing our service on ports 8080 8081
 EXPOSE 8080 8081

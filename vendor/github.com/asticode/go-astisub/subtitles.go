@@ -1,6 +1,7 @@
 package astisub
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"os"
@@ -8,8 +9,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 // Bytes
@@ -61,7 +60,7 @@ func Open(o Options) (s *Subtitles, err error) {
 	// Open the file
 	var f *os.File
 	if f, err = os.Open(o.Filename); err != nil {
-		err = errors.Wrapf(err, "astisub: opening %s failed", o.Filename)
+		err = fmt.Errorf("astisub: opening %s failed: %w", o.Filename, err)
 		return
 	}
 	defer f.Close()
@@ -136,7 +135,7 @@ type Color struct {
 func newColorFromSSAString(s string, base int) (c *Color, err error) {
 	var i int64
 	if i, err = strconv.ParseInt(s, base, 64); err != nil {
-		err = errors.Wrapf(err, "parsing int %s with base %d failed", s, base)
+		err = fmt.Errorf("parsing int %s with base %d failed: %w", s, base, err)
 		return
 	}
 	c = &Color{
@@ -249,25 +248,27 @@ func (sa *StyleAttributes) propagateWebVTTAttributes() {}
 // Metadata represents metadata
 // TODO Merge attributes
 type Metadata struct {
-	Comments                 []string
-	Framerate                int
-	Language                 string
-	SSACollisions            string
-	SSAOriginalEditing       string
-	SSAOriginalScript        string
-	SSAOriginalTiming        string
-	SSAOriginalTranslation   string
-	SSAPlayDepth             *int
-	SSAPlayResX, SSAPlayResY *int
-	SSAScriptType            string
-	SSAScriptUpdatedBy       string
-	SSASynchPoint            string
-	SSATimer                 *float64
-	SSAUpdateDetails         string
-	SSAWrapStyle             string
-	STLPublisher             string
-	Title                    string
-	TTMLCopyright            string
+	Comments                                            []string
+	Framerate                                           int
+	Language                                            string
+	SSACollisions                                       string
+	SSAOriginalEditing                                  string
+	SSAOriginalScript                                   string
+	SSAOriginalTiming                                   string
+	SSAOriginalTranslation                              string
+	SSAPlayDepth                                        *int
+	SSAPlayResX, SSAPlayResY                            *int
+	SSAScriptType                                       string
+	SSAScriptUpdatedBy                                  string
+	SSASynchPoint                                       string
+	SSATimer                                            *float64
+	SSAUpdateDetails                                    string
+	SSAWrapStyle                                        string
+	STLMaximumNumberOfDisplayableCharactersInAnyTextRow *int
+	STLMaximumNumberOfDisplayableRows                   *int
+	STLPublisher                                        string
+	Title                                               string
+	TTMLCopyright                                       string
 }
 
 // Region represents a subtitle's region
@@ -568,7 +569,7 @@ func (s Subtitles) Write(dst string) (err error) {
 	// Create the file
 	var f *os.File
 	if f, err = os.Create(dst); err != nil {
-		err = errors.Wrapf(err, "astisub: creating %s failed", dst)
+		err = fmt.Errorf("astisub: creating %s failed: %w", dst, err)
 		return
 	}
 	defer f.Close()
@@ -607,7 +608,7 @@ func parseDuration(i, millisecondSep string, numberOfMillisecondDigits int) (o t
 
 		// Parse milliseconds
 		if milliseconds, err = strconv.Atoi(s); err != nil {
-			err = errors.Wrapf(err, "astisub: atoi of %s failed", s)
+			err = fmt.Errorf("astisub: atoi of %s failed: %w", s, err)
 			return
 		}
 		milliseconds *= int(math.Pow10(numberOfMillisecondDigits - len(s)))
@@ -635,7 +636,7 @@ func parseDuration(i, millisecondSep string, numberOfMillisecondDigits int) (o t
 	var seconds int
 	s = strings.TrimSpace(partSeconds)
 	if seconds, err = strconv.Atoi(s); err != nil {
-		err = errors.Wrapf(err, "astisub: atoi of %s failed", s)
+		err = fmt.Errorf("astisub: atoi of %s failed: %w", s, err)
 		return
 	}
 
@@ -643,7 +644,7 @@ func parseDuration(i, millisecondSep string, numberOfMillisecondDigits int) (o t
 	var minutes int
 	s = strings.TrimSpace(partMinutes)
 	if minutes, err = strconv.Atoi(s); err != nil {
-		err = errors.Wrapf(err, "astisub: atoi of %s failed", s)
+		err = fmt.Errorf("astisub: atoi of %s failed: %w", s, err)
 		return
 	}
 
@@ -652,7 +653,7 @@ func parseDuration(i, millisecondSep string, numberOfMillisecondDigits int) (o t
 	if len(partHours) > 0 {
 		s = strings.TrimSpace(partHours)
 		if hours, err = strconv.Atoi(s); err != nil {
-			err = errors.Wrapf(err, "astisub: atoi of %s failed", s)
+			err = fmt.Errorf("astisub: atoi of %s failed: %w", s, err)
 			return
 		}
 	}

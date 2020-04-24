@@ -7,6 +7,8 @@ github.com/asticode/go-astiamqp v1.2.0/go.mod h1:bnOKJD4/B2T87fLEjnYFwEK1T4X/5iX
 github.com/asticode/go-astikit v0.0.2/go.mod h1:h4ly7idim1tNhaVkdVBeXQZEE3L0xblP7fCWbgwipF0=
 github.com/asticode/go-astikit v0.0.11 h1:ehXPlkacoNJTxiEo5K/oIWYFiQC4GkDn9THWjfumkNc=
 github.com/asticode/go-astikit v0.0.11/go.mod h1:h4ly7idim1tNhaVkdVBeXQZEE3L0xblP7fCWbgwipF0=
+github.com/asticode/go-astikit v0.2.0 h1:QonRVJKQB2btMYZGW+YkibMDOXje2F49RLW4UCnyjns=
+github.com/asticode/go-astikit v0.2.0/go.mod h1:h4ly7idim1tNhaVkdVBeXQZEE3L0xblP7fCWbgwipF0=
 github.com/asticode/go-astilog v1.0.0 h1:l9tek0K7KoQCmhZ7cvBTtVu0NsKpS9hB6jBLtQyxWYk=
 github.com/asticode/go-astilog v1.0.0/go.mod h1:Vg6SGUYb3tVyFeGQe0Mqmh0RMygpwy+huFKcyL92EVc=
 github.com/asticode/go-astilog v1.2.0/go.mod h1:0sGDwdYLRSFVbbvrXLbJC9niyGWL5JGTCEQWFJKHZr0=
@@ -15,6 +17,8 @@ github.com/asticode/go-astilog v1.4.0 h1:81eNYAC04VPg1b9UXdQe3NCT1EPo9CtGa2UUDnQ
 github.com/asticode/go-astilog v1.4.0/go.mod h1:0sGDwdYLRSFVbbvrXLbJC9niyGWL5JGTCEQWFJKHZr0=
 github.com/asticode/go-astisub v0.0.0-20190514140258-c0ed7925c393 h1:3hJzbzuc1mYjLc/mOYbLiAcUtM41TTnTH5hOUn0ytvk=
 github.com/asticode/go-astisub v0.0.0-20190514140258-c0ed7925c393/go.mod h1:xeIVqWzWf4FmtftqxYgZccqq/ihzQifwXzNU8Wp0PUI=
+github.com/asticode/go-astisub v0.2.0 h1:zBwpPQcJ1tpWAV7RbocnVFBluy8MepQeYIWIS6UO3Kg=
+github.com/asticode/go-astisub v0.2.0/go.mod h1:p6mFvZtwtUbE2EGCYNABqPXEOAo8a+whG5xMODbYA40=
 github.com/asticode/go-astitools v1.0.0/go.mod h1:E7f1P0KkBNgafRCD0dHqn41jNHyYHjxrnK1jH2s4pmA=
 github.com/asticode/go-astitools v1.1.0 h1:h5hVWUKB9eUZY7/mgu6Ic6Rke8ZiWHkiJO0rIGIb5j4=
 github.com/asticode/go-astitools v1.1.0/go.mod h1:EfgrhUJK6nM17TckqASIqR2W71uNUAoIonm6mNhUtaQ=
@@ -24,6 +28,8 @@ github.com/asticode/go-astits v1.0.0 h1:RmuQnNVFKaiHWNKSXA6lqiVsgJXEGnof1WDqPzDq
 github.com/asticode/go-astits v1.0.0/go.mod h1:YjTpnbhUpZb5Ygl/mNpH6F0fpq1FKtGIB/tn9yFKvr8=
 github.com/asticode/go-astits v1.2.0 h1:ml0KFLmBLurHbrjKWFAuKA3zT3iNQcGZ7V/WeflFbcM=
 github.com/asticode/go-astits v1.2.0/go.mod h1:1Tvjdozd9RwgwOUteaxmd0Sutyo+kTO24tnJ0kOWn/8=
+github.com/asticode/go-astits v1.3.0 h1:tlf2E0uNpL769FQr/2fZSvH1gEG5dqWezfaspGvfd+M=
+github.com/asticode/go-astits v1.3.0/go.mod h1:Dp78dEuksl+pWzlXTkpdd91U1QDX9r57db1XpLHm5Mw=
 github.com/asticode/go-astiws v1.0.1/go.mod h1:5F/0RkJTq1SZ0TsiheD3j/9lr9kla70c2q7w1aAG78Q=
 github.com/certifi/gocertifi v0.0.0-20190506164543-d2eda7129713 h1:UNOqI3EKhvbqV8f1Vm3NIwkrhq388sGCeAH2Op7w0rc=
 github.com/certifi/gocertifi v0.0.0-20190506164543-d2eda7129713/go.mod h1:GJKEexRPVJrBSOjoqN5VNOIKJ5Q3RViH6eu3puDRwx4=

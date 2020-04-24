@@ -2,19 +2,17 @@ package astisub
 
 import (
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"math"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 
-	"sort"
-
-	"github.com/asticode/go-astitools/map"
-	"github.com/asticode/go-astitools/string"
-	"github.com/pkg/errors"
+	"github.com/asticode/go-astikit"
 )
 
 // https://www.w3.org/TR/ttaf1-dfxp/
@@ -28,13 +26,14 @@ const (
 )
 
 // TTML language mapping
-var ttmlLanguageMapping = astimap.NewMap(ttmlLanguageEnglish, LanguageEnglish).
+var ttmlLanguageMapping = astikit.NewBiMap().
+	Set(ttmlLanguageEnglish, LanguageEnglish).
 	Set(ttmlLanguageFrench, LanguageFrench)
 
 // TTML Clock Time Frames and Offset Time
 var (
-	ttmlRegexpClockTimeFrames = regexp.MustCompile("\\:[\\d]+$")
-	ttmlRegexpOffsetTime      = regexp.MustCompile("^(\\d+)(\\.(\\d+))?(h|m|s|ms|f|t)$")
+	ttmlRegexpClockTimeFrames = regexp.MustCompile(`\:[\d]+$`)
+	ttmlRegexpOffsetTime      = regexp.MustCompile(`^(\d+)(\.(\d+))?(h|m|s|ms|f|t)$`)
 )
 
 // TTMLIn represents an input TTML that must be unmarshaled
@@ -50,13 +49,16 @@ type TTMLIn struct {
 }
 
 // metadata returns the Metadata of the TTML
-func (t TTMLIn) metadata() *Metadata {
-	return &Metadata{
+func (t TTMLIn) metadata() (m *Metadata) {
+	m = &Metadata{
 		Framerate:     t.Framerate,
-		Language:      ttmlLanguageMapping.B(astistring.ToLength(t.Lang, " ", 2)).(string),
 		Title:         t.Metadata.Title,
 		TTMLCopyright: t.Metadata.Copyright,
 	}
+	if v, ok := ttmlLanguageMapping.Get(astikit.StrPad(t.Lang, ' ', 2, astikit.PadCut)); ok {
+		m.Language = v.(string)
+	}
+	return
 }
 
 // TTMLInMetadata represents an input TTML Metadata
@@ -168,7 +170,7 @@ func (i *TTMLInItems) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err 
 			if err == io.EOF {
 				break
 			}
-			err = errors.Wrap(err, "astisub: getting next token failed")
+			err = fmt.Errorf("astisub: getting next token failed: %w", err)
 			return
 		}
 
@@ -176,7 +178,7 @@ func (i *TTMLInItems) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err 
 		if se, ok := t.(xml.StartElement); ok {
 			var e = TTMLInItem{}
 			if err = d.DecodeElement(&e, &se); err != nil {
-				err = errors.Wrap(err, "astisub: decoding xml.StartElement failed")
+				err = fmt.Errorf("astisub: decoding xml.StartElement failed: %w", err)
 				return
 			}
 			*i = append(*i, e)
@@ -215,7 +217,7 @@ func (d *TTMLInDuration) UnmarshalText(i []byte) (err error) {
 		value, err := strconv.Atoi(matches[1])
 
 		if err != nil {
-			err = errors.Wrapf(err, "astisub: failed to parse value %s", matches[1])
+			err = fmt.Errorf("astisub: failed to parse value %s", matches[1])
 			return err
 		}
 
@@ -232,7 +234,7 @@ func (d *TTMLInDuration) UnmarshalText(i []byte) (err error) {
 			fractionBase = math.Pow10(len(matches[3]))
 
 			if err != nil {
-				err = errors.Wrapf(err, "astisub: failed to parse fraction %s", matches[3])
+				err = fmt.Errorf("astisub: failed to parse fraction %s", matches[3])
 				return err
 			}
 		}
@@ -269,7 +271,7 @@ func (d *TTMLInDuration) UnmarshalText(i []byte) (err error) {
 		// Parse frames
 		var s = text[indexes[0]+1 : indexes[1]]
 		if d.frames, err = strconv.Atoi(s); err != nil {
-			err = errors.Wrapf(err, "astisub: atoi %s failed", s)
+			err = fmt.Errorf("astisub: atoi %s failed: %w", s, err)
 			return
 		}
 
@@ -297,7 +299,7 @@ func ReadFromTTML(i io.Reader) (o *Subtitles, err error) {
 	// Unmarshal XML
 	var ttml TTMLIn
 	if err = xml.NewDecoder(i).Decode(&ttml); err != nil {
-		err = errors.Wrap(err, "astisub: xml decoding failed")
+		err = fmt.Errorf("astisub: xml decoding failed: %w", err)
 		return
 	}
 
@@ -374,7 +376,7 @@ func ReadFromTTML(i io.Reader) (o *Subtitles, err error) {
 		// Unmarshal items
 		var items = TTMLInItems{}
 		if err = xml.Unmarshal([]byte("<span>"+ts.Items+"</span>"), &items); err != nil {
-			err = errors.Wrap(err, "astisub: unmarshaling items failed")
+			err = fmt.Errorf("astisub: unmarshaling items failed: %w", err)
 			return
 		}
 
@@ -567,7 +569,9 @@ func (s Subtitles) WriteToTTML(o io.Writer) (err error) {
 
 	// Add metadata
 	if s.Metadata != nil {
-		ttml.Lang = ttmlLanguageMapping.A(s.Metadata.Language).(string)
+		if v, ok := ttmlLanguageMapping.GetInverse(s.Metadata.Language); ok {
+			ttml.Lang = v.(string)
+		}
 		if len(s.Metadata.TTMLCopyright) > 0 || len(s.Metadata.Title) > 0 {
 			ttml.Metadata = &TTMLOutMetadata{
 				Copyright: s.Metadata.TTMLCopyright,
@@ -584,7 +588,7 @@ func (s Subtitles) WriteToTTML(o io.Writer) (err error) {
 	sort.Strings(k)
 	for _, id := range k {
 		var ttmlRegion = TTMLOutRegion{TTMLOutHeader: TTMLOutHeader{
-			ID: s.Regions[id].ID,
+			ID:                     s.Regions[id].ID,
 			TTMLOutStyleAttributes: ttmlOutStyleAttributesFromStyleAttributes(s.Regions[id].InlineStyle),
 		}}
 		if s.Regions[id].Style != nil {
@@ -601,7 +605,7 @@ func (s Subtitles) WriteToTTML(o io.Writer) (err error) {
 	sort.Strings(k)
 	for _, id := range k {
 		var ttmlStyle = TTMLOutStyle{TTMLOutHeader: TTMLOutHeader{
-			ID: s.Styles[id].ID,
+			ID:                     s.Styles[id].ID,
 			TTMLOutStyleAttributes: ttmlOutStyleAttributesFromStyleAttributes(s.Styles[id].InlineStyle),
 		}}
 		if s.Styles[id].Style != nil {
@@ -614,8 +618,8 @@ func (s Subtitles) WriteToTTML(o io.Writer) (err error) {
 	for _, item := range s.Items {
 		// Init subtitle
 		var ttmlSubtitle = TTMLOutSubtitle{
-			Begin: TTMLOutDuration(item.StartAt),
-			End:   TTMLOutDuration(item.EndAt),
+			Begin:                  TTMLOutDuration(item.StartAt),
+			End:                    TTMLOutDuration(item.EndAt),
 			TTMLOutStyleAttributes: ttmlOutStyleAttributesFromStyleAttributes(item.InlineStyle),
 		}
 
@@ -635,7 +639,7 @@ func (s Subtitles) WriteToTTML(o io.Writer) (err error) {
 			for _, lineItem := range line.Items {
 				// Init ttml item
 				var ttmlItem = TTMLOutItem{
-					Text: lineItem.Text,
+					Text:                   lineItem.Text,
 					TTMLOutStyleAttributes: ttmlOutStyleAttributesFromStyleAttributes(lineItem.InlineStyle),
 					XMLName:                xml.Name{Local: "span"},
 				}
@@ -666,7 +670,7 @@ func (s Subtitles) WriteToTTML(o io.Writer) (err error) {
 	var e = xml.NewEncoder(o)
 	e.Indent("", "    ")
 	if err = e.Encode(ttml); err != nil {
-		err = errors.Wrap(err, "astisub: xml encoding failed")
+		err = fmt.Errorf("astisub: xml encoding failed: %w", err)
 		return
 	}
 	return
