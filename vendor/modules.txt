@@ -1,12 +1,22 @@
 # github.com/asticode/go-astikit v0.2.0
 github.com/asticode/go-astikit
+# github.com/asticode/go-astilog v1.4.0
+## explicit
 # github.com/asticode/go-astisub v0.2.0
+## explicit
 github.com/asticode/go-astisub
+# github.com/asticode/go-astitools v1.3.0
+## explicit
 # github.com/asticode/go-astits v1.3.0
 github.com/asticode/go-astits
+# github.com/bakins/logrus-middleware v0.0.0-20180426214643-ce4c6f8deb07
+## explicit
+github.com/bakins/logrus-middleware
 # github.com/djimenez/iconv-go v0.0.0-20160305225143-8960e66bd3da
+## explicit
 github.com/djimenez/iconv-go
 # github.com/gogs/chardet v0.0.0-20150115103509-2404f7772561
+## explicit
 github.com/gogs/chardet
 # github.com/golang/protobuf v1.3.1
 github.com/golang/protobuf/proto
@@ -16,14 +26,18 @@ github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
 # github.com/joonix/log v0.0.0-20190524090622-13fe31bbdd7a
+## explicit
 github.com/joonix/log
 # github.com/konsorten/go-windows-terminal-sequences v1.0.2
 github.com/konsorten/go-windows-terminal-sequences
 # github.com/pkg/errors v0.8.1
+## explicit
 github.com/pkg/errors
 # github.com/sirupsen/logrus v1.4.2
+## explicit
 github.com/sirupsen/logrus
 # github.com/urfave/cli v1.21.0
+## explicit
 github.com/urfave/cli
 # golang.org/x/sys v0.0.0-20191204072324-ce4227a45e2e
 golang.org/x/sys/unix

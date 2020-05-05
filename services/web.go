@@ -6,6 +6,8 @@ import (
 	"net"
 	"net/http"
 
+	logrusmiddleware "github.com/bakins/logrus-middleware"
+	joonix "github.com/joonix/log"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -48,8 +50,13 @@ func (s *Web) Serve() error {
 		}
 		io.WriteString(w, data)
 	})
+	logger := log.New()
+	logger.SetFormatter(joonix.NewFormatter())
+	l := logrusmiddleware.Middleware{
+		Logger: logger,
+	}
 	log.Infof("Serving Web at %v", addr)
-	return http.Serve(ln, mux)
+	return http.Serve(ln, l.Handler(mux, ""))
 }
 
 func (s *Web) Close() {
