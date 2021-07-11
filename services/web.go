@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"time"
 
 	logrusmiddleware "github.com/bakins/logrus-middleware"
 	joonix "github.com/joonix/log"
@@ -56,7 +57,13 @@ func (s *Web) Serve() error {
 		Logger: logger,
 	}
 	log.Infof("Serving Web at %v", addr)
-	return http.Serve(ln, l.Handler(mux, ""))
+	srv := &http.Server{
+		Handler:        l.Handler(mux, ""),
+		ReadTimeout:    5 * time.Minute,
+		WriteTimeout:   5 * time.Minute,
+		MaxHeaderBytes: 50 << 20,
+	}
+	return srv.Serve(ln)
 }
 
 func (s *Web) Close() {
