@@ -1,6 +1,6 @@
 module github.com/webtor-io/srt2vtt
 
-go 1.14
+go 1.16
 
 require (
 	github.com/asticode/go-astilog v1.4.0 // indirect
