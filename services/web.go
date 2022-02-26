@@ -45,7 +45,7 @@ func (s *Web) Serve() error {
 		data, err := s.pool.Get(url)
 		if err != nil {
 			log.WithError(err).Errorf("Failed to process request with url=%s", url)
-			w.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 		io.WriteString(w, data)
