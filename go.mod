@@ -15,12 +15,12 @@ require (
 
 require (
 	github.com/asticode/go-astikit v0.2.0 // indirect
-	github.com/asticode/go-astilog v1.4.0 // indirect
-	github.com/asticode/go-astitools v1.3.0 // indirect
 	github.com/asticode/go-astits v1.3.0 // indirect
+	github.com/bakins/test-helpers v0.0.0-20141028124846-af83df64dc31 // indirect
 	github.com/golang/protobuf v1.3.1 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
-	golang.org/x/sys v0.0.0-20191204072324-ce4227a45e2e // indirect
-	golang.org/x/text v0.3.2 // indirect
+	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
+	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
+	golang.org/x/text v0.3.8 // indirect
 	google.golang.org/genproto v0.0.0-20190522204451-c2c4e71fbf69 // indirect
 )
