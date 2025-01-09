@@ -6,13 +6,12 @@ WORKDIR /app
 # copy the source files
 COPY . .
 
-# compile linux only
-ENV GOOS=linux
+ENV GOOS=linux CGO_LDFLAGS="-static"
 
 # build the binary with debug information removed
 RUN go build -ldflags '-w -s' -a -installsuffix cgo -o server
 
-FROM golang:latest
+FROM alpine:latest
 
 # copy our static linked library
 COPY --from=build /app/server .

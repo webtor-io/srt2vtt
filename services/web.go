@@ -78,7 +78,7 @@ func (s *Web) Serve() error {
 	l := logrusmiddleware.Middleware{
 		Logger: logger,
 	}
-	log.Infof("Serving Web at %v", addr)
+	log.Infof("serving Web at %v", addr)
 	srv := &http.Server{
 		Handler: l.Handler(mux, ""),
 		// ReadTimeout:    5 * time.Minute,
