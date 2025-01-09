@@ -2,26 +2,51 @@ package services
 
 import (
 	"fmt"
+	"github.com/urfave/cli"
 	"io"
 	"net"
 	"net/http"
 
 	logrusmiddleware "github.com/bakins/logrus-middleware"
-	joonix "github.com/joonix/log"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
 type Web struct {
-	pool *SRT2VTTPool
+	pool *SRT2VTT
 	host string
 	port int
-	acao string
 	ln   net.Listener
 }
 
-func NewWeb(pool *SRT2VTTPool, host string, port int, acao string) *Web {
-	return &Web{pool: pool, host: host, port: port, acao: acao}
+const (
+	webHostFlag = "host"
+	webPortFlag = "port"
+)
+
+func RegisterWebFlags(f []cli.Flag) []cli.Flag {
+	return append(f,
+		cli.StringFlag{
+			Name:   webHostFlag,
+			Usage:  "listening host",
+			Value:  "",
+			EnvVar: "WEB_HOST",
+		},
+		cli.IntFlag{
+			Name:   webPortFlag,
+			Usage:  "http listening port",
+			Value:  8080,
+			EnvVar: "WEB_PORT",
+		},
+	)
+}
+
+func NewWeb(c *cli.Context, pool *SRT2VTT) *Web {
+	return &Web{
+		pool: pool,
+		host: c.String(webHostFlag),
+		port: c.Int(webPortFlag),
+	}
 }
 
 func (s *Web) Serve() error {
@@ -38,20 +63,18 @@ func (s *Web) Serve() error {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		if r.Header.Get("Origin") != "" && r.Header.Get("X-CORS-Set") != "true" {
-			w.Header().Set("Access-Control-Allow-Credentials", "true")
-			w.Header().Set("Access-Control-Allow-Origin", s.acao)
-		}
 		data, err := s.pool.Get(url)
 		if err != nil {
 			log.WithError(err).Errorf("Failed to process request with url=%s", url)
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		io.WriteString(w, data)
+		_, _ = io.WriteString(w, data)
 	})
 	logger := log.New()
-	logger.SetFormatter(joonix.NewFormatter())
+	logger.SetFormatter(&log.TextFormatter{
+		FullTimestamp: true,
+	})
 	l := logrusmiddleware.Middleware{
 		Logger: logger,
 	}
@@ -67,6 +90,6 @@ func (s *Web) Serve() error {
 
 func (s *Web) Close() {
 	if s.ln != nil {
-		s.ln.Close()
+		_ = s.ln.Close()
 	}
 }
