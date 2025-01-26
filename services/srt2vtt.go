@@ -2,7 +2,8 @@ package services
 
 import (
 	"bytes"
-	"io/ioutil"
+	"context"
+	"io"
 	"net/http"
 	"time"
 
@@ -20,10 +21,12 @@ import (
 
 type SRT2VTT struct {
 	lazymap.LazyMap[string]
+	cl *http.Client
 }
 
-func NewSRT2VTT() *SRT2VTT {
+func NewSRT2VTT(cl *http.Client) *SRT2VTT {
 	return &SRT2VTT{
+		cl: cl,
 		LazyMap: lazymap.New[string](&lazymap.Config{
 			Expire:      60 * time.Second,
 			ErrorExpire: 5 * time.Second,
@@ -31,18 +34,20 @@ func NewSRT2VTT() *SRT2VTT {
 	}
 }
 
-func (s *SRT2VTT) get(src string) (string, error) {
-	timeout := 10 * time.Minute
-	client := http.Client{
-		Timeout: timeout,
-	}
+func (s *SRT2VTT) get(ctx context.Context, src string) (string, error) {
 	log.Infof("loading sourceURL=%v", src)
-	resp, err := client.Get(src)
+	req, err := http.NewRequest(http.MethodGet, src, nil)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to make request")
+	}
+	resp, err := s.cl.Do(req.WithContext(ctx))
 	if err != nil {
 		return "", errors.Wrap(err, "failed to fetch url")
 	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to read body")
 	}
@@ -70,8 +75,8 @@ func (s *SRT2VTT) get(src string) (string, error) {
 	return buf.String(), nil
 }
 
-func (s *SRT2VTT) Get(src string) (string, error) {
+func (s *SRT2VTT) Get(ctx context.Context, src string) (string, error) {
 	return s.LazyMap.Get(src, func() (string, error) {
-		return s.get(src)
+		return s.get(ctx, src)
 	})
 }

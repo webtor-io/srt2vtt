@@ -5,6 +5,7 @@ import (
 	"github.com/urfave/cli"
 	cs "github.com/webtor-io/common-services"
 	"github.com/webtor-io/srt2vtt/services"
+	"net/http"
 )
 
 func configure(app *cli.App) {
@@ -16,8 +17,9 @@ func configure(app *cli.App) {
 
 func run(c *cli.Context) error {
 	var servers []cs.Servable
+
 	// Setting SRT2VTTPoolService
-	srt2vtt := services.NewSRT2VTT()
+	srt2vtt := services.NewSRT2VTT(http.DefaultClient)
 
 	// Setting Probe
 	probe := cs.NewProbe(c)

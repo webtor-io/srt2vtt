@@ -16,16 +16,23 @@ USAGE:
    srt2vtt [global options] command [command options] [arguments...]
 
 VERSION:
-   0.0.1
+   1.0.0
 
 COMMANDS:
    help, h  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
-   --host value, -H value                             listening host
-   --http-port value, --Ph value                      http listening port (default: 8080)
-   --access-control-allow-origin value, --acao value  Access-Control-Allow-Origin header value (default: "*") [$ACCESS_CONTROL_ALLOW_ORIGIN]
-   --probe-port value, --pP value                     probe port (default: 8081)
-   --help, -h                                         show help
-   --version, -v                                      print the version
+   --probe-host value  probe listening host [$PROBE_HOST]
+   --probe-port value  probe listening port (default: 8081) [$PROBE_PORT]
+   --use-probe         enable probe [$USE_PROBE]
+   --host value        listening host [$WEB_HOST]
+   --port value        http listening port (default: 8080) [$WEB_PORT]
+   --help, -h          show help
+   --version, -v       print the version
+```
+
+## Example
+
+```
+curl -H 'X-Source-Url: https://github.com/webtor-io/srt2vtt/raw/refs/heads/master/samples/greek.srt' 'http://localhost:8080'
 ```

@@ -53,7 +53,7 @@ func (s *Web) Serve() error {
 	addr := fmt.Sprintf("%s:%d", s.host, s.port)
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
-		return errors.Wrap(err, "Failed to listen to tcp connection")
+		return errors.Wrap(err, "failed to listen to tcp connection")
 	}
 	s.ln = ln
 	mux := http.NewServeMux()
@@ -63,9 +63,9 @@ func (s *Web) Serve() error {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		data, err := s.pool.Get(url)
+		data, err := s.pool.Get(r.Context(), url)
 		if err != nil {
-			log.WithError(err).Errorf("Failed to process request with url=%s", url)
+			log.WithError(err).Errorf("failed to process request with url=%s", url)
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}

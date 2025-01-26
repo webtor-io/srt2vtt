@@ -14,7 +14,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "srt2vtt"
 	app.Usage = "converts srt to vtt"
-	app.Version = "0.0.1"
+	app.Version = "1.0.0"
 	configure(app)
 	err := app.Run(os.Args)
 	if err != nil {
