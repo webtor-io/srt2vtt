@@ -5,13 +5,13 @@ go 1.23
 require (
 	github.com/asticode/go-astisub v0.32.0
 	github.com/bakins/logrus-middleware v0.0.0-20180426214643-ce4c6f8deb07
-	github.com/djimenez/iconv-go v0.0.0-20160305225143-8960e66bd3da
 	github.com/gogs/chardet v0.0.0-20211120154057-b7413eaefb8f
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/urfave/cli v1.22.16
 	github.com/webtor-io/common-services v0.0.0-20250112153432-554128b56bd5
 	github.com/webtor-io/lazymap v0.0.0-20241211155941-e81d935cfa1d
+	golang.org/x/text v0.21.0
 )
 
 require (
@@ -26,7 +26,6 @@ require (
 	github.com/go-pg/migrations/v8 v8.1.0 // indirect
 	github.com/go-pg/pg/v10 v10.14.0 // indirect
 	github.com/go-pg/zerochecker v0.2.0 // indirect
-	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
@@ -45,7 +44,6 @@ require (
 	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/sys v0.29.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
 	google.golang.org/protobuf v1.36.4 // indirect
 	mellium.im/sasl v0.3.2 // indirect
 )

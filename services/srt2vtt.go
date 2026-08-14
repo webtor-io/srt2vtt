@@ -9,12 +9,14 @@ import (
 
 	"github.com/asticode/go-astisub"
 
-	"github.com/djimenez/iconv-go"
-
 	"github.com/gogs/chardet"
 	"github.com/pkg/errors"
 
 	log "github.com/sirupsen/logrus"
+
+	"golang.org/x/text/encoding"
+	"golang.org/x/text/encoding/htmlindex"
+	"golang.org/x/text/encoding/unicode/utf32"
 
 	"github.com/webtor-io/lazymap"
 )
@@ -34,6 +36,19 @@ func NewSRT2VTT(cl *http.Client) *SRT2VTT {
 	}
 }
 
+// getEncoding resolves a charset name as reported by chardet to an encoding.
+// htmlindex covers every charset chardet can return except UTF-32, which it
+// deliberately omits as it is not a WHATWG encoding, so it is handled here.
+func getEncoding(charset string) (encoding.Encoding, error) {
+	switch charset {
+	case "UTF-32LE":
+		return utf32.UTF32(utf32.LittleEndian, utf32.IgnoreBOM), nil
+	case "UTF-32BE":
+		return utf32.UTF32(utf32.BigEndian, utf32.IgnoreBOM), nil
+	}
+	return htmlindex.Get(charset)
+}
+
 func (s *SRT2VTT) get(ctx context.Context, src string) (string, error) {
 	log.Infof("loading sourceURL=%v", src)
 	req, err := http.NewRequest(http.MethodGet, src, nil)
@@ -51,7 +66,6 @@ func (s *SRT2VTT) get(ctx context.Context, src string) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "failed to read body")
 	}
-	bodyStr := string(body)
 	detector := chardet.NewTextDetector()
 	enc, err := detector.DetectBest(body)
 	if err != nil {
@@ -59,10 +73,16 @@ func (s *SRT2VTT) get(ctx context.Context, src string) (string, error) {
 	}
 	if enc.Charset != "UTF-8" {
 		log.Infof("converting source encoding=%v to utf-8", enc.Charset)
-		encoded, _ := iconv.ConvertString(bodyStr, enc.Charset, "utf-8")
-		bodyStr = encoded
+		e, err := getEncoding(enc.Charset)
+		if err != nil {
+			return "", errors.Wrap(err, "failed to find encoding")
+		}
+		body, err = e.NewDecoder().Bytes(body)
+		if err != nil {
+			return "", errors.Wrap(err, "failed to convert encoding")
+		}
 	}
-	srt, err := astisub.ReadFromSRT(bytes.NewReader([]byte(bodyStr)))
+	srt, err := astisub.ReadFromSRT(bytes.NewReader(body))
 	if err != nil {
 		return "", errors.Wrap(err, "failed to read srt")
 	}

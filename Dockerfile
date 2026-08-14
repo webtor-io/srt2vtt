@@ -1,17 +1,15 @@
 FROM golang:1.23.5-alpine3.21 AS build
 
-RUN apk add --no-cache build-base
-
 # set work dir
 WORKDIR /app
 
 # copy the source files
 COPY . .
 
-ENV GOOS=linux CGO_LDFLAGS="-static" CGO_ENABLED=1
+ENV GOOS=linux CGO_ENABLED=0
 
 # build the binary with debug information removed
-RUN go build -ldflags '-w -s' -a -installsuffix cgo -o server
+RUN go build -ldflags '-w -s' -o server
 
 FROM alpine:3.21
 
