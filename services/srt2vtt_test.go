@@ -201,3 +201,143 @@ func TestGetEncoding(t *testing.T) {
 		t.Errorf("expected an error for an unsupported charset, got none")
 	}
 }
+
+// ASS fixture with the blocks a real fansub carries: styles, inline
+// override tags (position, karaoke) and \N line breaks. The override
+// blocks must NOT leak into the WebVTT output.
+const russianASS = `[Script Info]
+Title: Test
+ScriptType: v4.00+
+PlayResX: 1280
+PlayResY: 720
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,48,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,,Привет, как дела?
+Dialogue: 0,0:00:04.00,0:00:06.00,Default,,0,0,0,,{\pos(640,360)}Сцена с позиционированием
+Dialogue: 0,0:00:07.00,0:00:09.00,Default,,0,0,0,,Первая строка\NВторая строка
+Dialogue: 0,0:00:10.00,0:00:12.00,Default,,0,0,0,,Мы долго шли по заснеженному лесу и молчали.
+Dialogue: 0,0:00:13.00,0:00:15.00,Default,,0,0,0,,Неужели ты думаешь, что всё закончилось именно так?
+Dialogue: 0,0:00:16.00,0:00:18.00,Default,,0,0,0,,Шесть лет спустя он вернулся в родной город навсегда.
+Dialogue: 0,0:00:19.00,0:00:21.00,Default,,0,0,0,,Я до сих пор помню тот день, когда мы познакомились.
+`
+
+const englishSSA = `[Script Info]
+Title: Test SSA
+ScriptType: v4.00
+
+[V4 Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, TertiaryColour, BackColour, Bold, Italic, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, AlphaLevel, Encoding
+Style: Default,Arial,20,16777215,65535,65535,-2147483640,0,0,1,2,2,2,10,10,10,0,1
+
+[Events]
+Format: Marked, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: Marked=0,0:00:01.00,0:00:03.00,Default,,0,0,0,,Hello from SSA format.
+`
+
+// TestASSConversion serves ASS/SSA content and asserts it converts to
+// WebVTT with clean cue text (styling stripped, no override-tag leakage).
+func TestASSConversion(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		enc     encoding.Encoding
+		charset string
+		src     string
+		want    []string
+		notWant []string
+	}{
+		{
+			name: "ass-utf8",
+			src:  russianASS,
+			want: []string{
+				"Привет, как дела?",
+				"Сцена с позиционированием",
+				"Первая строка",
+				"Вторая строка",
+			},
+			notWant: []string{`{\pos`, "Dialogue:"},
+		},
+		{
+			name:    "ssa-utf8",
+			src:     englishSSA,
+			want:    []string{"Hello from SSA format."},
+			notWant: []string{"Dialogue:"},
+		},
+		{
+			name:    "ass-windows-1251",
+			enc:     charmap.Windows1251,
+			charset: "windows-1251",
+			src:     russianASS,
+			want:    []string{"Привет, как дела?", "Шесть лет спустя он вернулся в родной город навсегда."},
+			notWant: []string{`{\pos`},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			body := []byte(tc.src)
+			if tc.enc != nil {
+				var err error
+				body, err = tc.enc.NewEncoder().Bytes(body)
+				if err != nil {
+					t.Fatalf("failed to encode fixture: %v", err)
+				}
+				if bytes.Equal(body, []byte(tc.src)) {
+					t.Fatalf("fixture is byte-identical to its UTF-8 source, nothing to convert")
+				}
+				// Guard against chardet drifting: the case only tests the
+				// legacy-encoding path if detection actually lands on it.
+				// Detection runs on the dialogue sample, mirroring get().
+				detected, err := chardet.NewTextDetector().DetectBest(ssaDialogueText(body))
+				if err != nil {
+					t.Fatalf("failed to detect fixture encoding: %v", err)
+				}
+				if detected.Charset != tc.charset {
+					t.Fatalf("fixture detected as %v, want %v", detected.Charset, tc.charset)
+				}
+			}
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_, _ = w.Write(body)
+			}))
+			defer srv.Close()
+
+			vtt, err := NewSRT2VTT(srv.Client()).Get(context.Background(), srv.URL+"/"+tc.name+".ass")
+			if err != nil {
+				t.Fatalf("failed to convert: %v", err)
+			}
+			if !strings.HasPrefix(vtt, "WEBVTT") {
+				t.Fatalf("output is not WebVTT:\n%s", vtt)
+			}
+			for _, w := range tc.want {
+				if !strings.Contains(vtt, w) {
+					t.Errorf("vtt is missing %q\ngot:\n%s", w, vtt)
+				}
+			}
+			for _, nw := range tc.notWant {
+				if strings.Contains(vtt, nw) {
+					t.Errorf("vtt leaked %q\ngot:\n%s", nw, vtt)
+				}
+			}
+		})
+	}
+}
+
+// TestSRTStillDetectedAsSRT guards the sniffing order: a plain SRT must
+// keep going through the SRT reader even though it may contain square
+// brackets in cue text (e.g. "[MUSIC]").
+func TestSRTStillDetectedAsSRT(t *testing.T) {
+	srt := "1\n00:00:01,000 --> 00:00:03,000\n[MUSIC] something plays\n"
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(srt))
+	}))
+	defer srv.Close()
+	vtt, err := NewSRT2VTT(srv.Client()).Get(context.Background(), srv.URL+"/plain.srt")
+	if err != nil {
+		t.Fatalf("failed to convert: %v", err)
+	}
+	if !strings.Contains(vtt, "[MUSIC] something plays") {
+		t.Errorf("vtt is missing cue text, got:\n%s", vtt)
+	}
+}
