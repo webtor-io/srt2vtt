@@ -10,13 +10,14 @@ import (
 	logrusmiddleware "github.com/bakins/logrus-middleware"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	cs "github.com/webtor-io/common-services"
 )
 
 type Web struct {
 	pool *SRT2VTT
 	host string
 	port int
-	ln   net.Listener
+	gs   *cs.GracefulServer
 }
 
 const (
@@ -25,6 +26,7 @@ const (
 )
 
 func RegisterWebFlags(f []cli.Flag) []cli.Flag {
+	f = cs.RegisterShutdownFlags(f)
 	return append(f,
 		cli.StringFlag{
 			Name:   webHostFlag,
@@ -46,6 +48,7 @@ func NewWeb(c *cli.Context, pool *SRT2VTT) *Web {
 		pool: pool,
 		host: c.String(webHostFlag),
 		port: c.Int(webPortFlag),
+		gs:   cs.NewGracefulServer(cs.ShutdownTimeout(c)),
 	}
 }
 
@@ -55,7 +58,11 @@ func (s *Web) Serve() error {
 	if err != nil {
 		return errors.Wrap(err, "failed to listen to tcp connection")
 	}
-	s.ln = ln
+	log.Infof("serving Web at %v", addr)
+	return s.serve(ln)
+}
+
+func (s *Web) serve(ln net.Listener) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		url := r.Header.Get("X-Source-Url")
@@ -78,18 +85,18 @@ func (s *Web) Serve() error {
 	l := logrusmiddleware.Middleware{
 		Logger: logger,
 	}
-	log.Infof("serving Web at %v", addr)
 	srv := &http.Server{
 		Handler: l.Handler(mux, ""),
 		// ReadTimeout:    5 * time.Minute,
 		// WriteTimeout:   5 * time.Minute,
 		MaxHeaderBytes: 50 << 20,
 	}
-	return srv.Serve(ln)
+	return s.gs.Serve(srv, ln)
 }
 
+// Close stops accepting and lets in-flight conversions finish, up to
+// WEB_SHUTDOWN_TIMEOUT. Closing only the listener let the process exit in the
+// middle of every response. run() defers it last, so it runs first.
 func (s *Web) Close() {
-	if s.ln != nil {
-		_ = s.ln.Close()
-	}
+	s.gs.Close()
 }

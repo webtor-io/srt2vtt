@@ -22,13 +22,14 @@ COMMANDS:
    help, h  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
-   --probe-host value  probe listening host [$PROBE_HOST]
-   --probe-port value  probe listening port (default: 8081) [$PROBE_PORT]
-   --use-probe         enable probe [$USE_PROBE]
-   --host value        listening host [$WEB_HOST]
-   --port value        http listening port (default: 8080) [$WEB_PORT]
-   --help, -h          show help
-   --version, -v       print the version
+   --probe-host value        probe listening host [$PROBE_HOST]
+   --probe-port value        probe listening port (default: 8081) [$PROBE_PORT]
+   --use-probe               enable probe [$USE_PROBE]
+   --shutdown-timeout value  how long to let in-flight requests finish on SIGTERM; keep below terminationGracePeriodSeconds minus the preStop sleep (default: 20s) [$WEB_SHUTDOWN_TIMEOUT]
+   --host value              listening host [$WEB_HOST]
+   --port value              http listening port (default: 8080) [$WEB_PORT]
+   --help, -h                show help
+   --version, -v             print the version
 ```
 
 ## Example
