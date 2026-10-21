@@ -10,7 +10,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/urfave/cli v1.22.17
 	github.com/webtor-io/common-services v0.0.0-20261007162356-7960c21dad8f
-	github.com/webtor-io/lazymap v0.0.0-20241211155941-e81d935cfa1d
+	github.com/webtor-io/lazymap v0.0.0-20261021184726-55fd9cba3e7a
 	golang.org/x/text v0.30.0
 )
 

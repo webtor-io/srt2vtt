@@ -22,7 +22,7 @@ import (
 )
 
 type SRT2VTT struct {
-	lazymap.LazyMap[string]
+	*lazymap.LazyMap[string]
 	cl *http.Client
 }
 
