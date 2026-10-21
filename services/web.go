@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	cs "github.com/webtor-io/common-services"
+	"github.com/webtor-io/lazymap"
 )
 
 type Web struct {
@@ -72,7 +73,14 @@ func (s *Web) serve(ln net.Listener) error {
 		}
 		data, err := s.pool.Get(r.Context(), url)
 		if err != nil {
-			log.WithError(err).Errorf("failed to process request with url=%s", url)
+			l := log.WithError(err)
+			// A panic in the conversion comes back as an error whose message
+			// carries no location; net/http used to print its stack.
+			var pe *lazymap.PanicError
+			if errors.As(err, &pe) {
+				l = l.WithField("stack", string(pe.Stack))
+			}
+			l.Errorf("failed to process request with url=%s", url)
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
