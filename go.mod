@@ -1,6 +1,6 @@
 module github.com/webtor-io/srt2vtt
 
-go 1.25.0
+go 1.27
 
 require (
 	github.com/asticode/go-astisub v0.32.0

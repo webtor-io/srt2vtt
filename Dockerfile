@@ -1,4 +1,4 @@
-FROM golang:1.25-alpine AS build
+FROM golang:latest AS build
 
 # set work dir
 WORKDIR /app
@@ -11,7 +11,7 @@ ENV GOOS=linux CGO_ENABLED=0
 # build the binary with debug information removed
 RUN go build -ldflags '-w -s' -o server
 
-FROM alpine:3.21
+FROM alpine:latest
 
 # copy our static linked library
 COPY --from=build /app/server .
